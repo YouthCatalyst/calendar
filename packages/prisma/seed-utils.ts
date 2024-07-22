@@ -14,6 +14,7 @@ export async function createUserAndEventType({
   user,
   eventTypes = [],
   credentials,
+  isNotValidated,
 }: {
   user: {
     email: string;
@@ -37,11 +38,12 @@ export async function createUserAndEventType({
     key: Prisma.JsonObject;
     appId: string;
   } | null)[];
+  isNotValidated?: boolean;
 }) {
   const { password: _password, ...restOfUser } = user;
   const userData = {
     ...restOfUser,
-    emailVerified: new Date(),
+    emailVerified: isNotValidated ? null : new Date(),
     completedOnboarding: user.completedOnboarding ?? true,
     locale: "en",
     schedules:
