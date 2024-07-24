@@ -18,6 +18,13 @@ export const adminRouter = router({
     const handler = await importHandler(namespaced("listPaginated"), () => import("./listPaginated.handler"));
     return handler(opts);
   }),
+  listPaginatedUnverified: authedAdminProcedure.input(ZListMembersSchema).query(async (opts) => {
+    const handler = await importHandler(
+      namespaced("listPaginatedUnverified"),
+      () => import("./listPaginatedUnverified.handler")
+    );
+    return handler(opts);
+  }),
   sendPasswordReset: authedAdminProcedure.input(ZAdminPasswordResetSchema).mutation(async (opts) => {
     const handler = await importHandler(
       namespaced("sendPasswordReset"),
