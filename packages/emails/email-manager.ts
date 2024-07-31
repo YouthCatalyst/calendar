@@ -37,6 +37,8 @@ import type { Feedback } from "./templates/feedback-email";
 import FeedbackEmail from "./templates/feedback-email";
 import type { PasswordReset } from "./templates/forgot-password-email";
 import ForgotPasswordEmail from "./templates/forgot-password-email";
+import type { ActivateMentor } from "./templates/invite-mentor-email";
+import InviteMentorEmail from "./templates/invite-mentor-email";
 import MonthlyDigestEmail from "./templates/monthly-digest-email";
 import NoShowFeeChargedEmail from "./templates/no-show-fee-charged-email";
 import OrganizationAdminNoSlotsEmail from "./templates/organization-admin-no-slots-email";
@@ -340,6 +342,10 @@ export const sendAwaitingPaymentEmail = async (calEvent: CalendarEvent) => {
     })
   );
   await Promise.all(emailsToSend);
+};
+
+export const sendInviteMentorEmail = async (activateMentor: ActivateMentor) => {
+  await sendEmail(() => new InviteMentorEmail(activateMentor));
 };
 
 export const sendOrganizerPaymentRefundFailedEmail = async (calEvent: CalendarEvent) => {

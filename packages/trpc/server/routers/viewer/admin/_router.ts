@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { authedAdminProcedure } from "../../../procedures/authedProcedure";
 import { router, importHandler } from "../../../trpc";
+import { ZActivateUserSchema } from "./activateUnverifiedUser.schema";
 import { ZCreateSelfHostedLicenseSchema } from "./createSelfHostedLicenseKey.schema";
 import { ZListMembersSchema } from "./listPaginated.schema";
 import { ZAdminLockUserAccountSchema } from "./lockUserAccount.schema";
@@ -22,6 +23,13 @@ export const adminRouter = router({
     const handler = await importHandler(
       namespaced("listPaginatedUnverified"),
       () => import("./listPaginatedUnverified.handler")
+    );
+    return handler(opts);
+  }),
+  activateUnverifiedUser: authedAdminProcedure.input(ZActivateUserSchema).mutation(async (opts) => {
+    const handler = await importHandler(
+      namespaced("activateUnverifiedUser"),
+      () => import("./activateUnverifiedUser.handler")
     );
     return handler(opts);
   }),
