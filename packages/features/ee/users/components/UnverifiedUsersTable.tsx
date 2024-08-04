@@ -52,21 +52,8 @@ function UsersTableBare() {
     onSuccess: ({ userId }) => {
       showToast("User have been activated", "success");
 
-      utils.viewer.admin.listPaginatedUnverified.setInfiniteData({ limit: FETCH_LIMIT }, (cachedData) => {
-        if (!cachedData) {
-          return {
-            pages: [],
-            pageParams: [],
-          };
-        }
-        return {
-          ...cachedData,
-          pages: cachedData.pages.map((page) => ({
-            ...page,
-            rows: page.rows.filter((row) => row.id !== userId),
-          })),
-        };
-      });
+      utils.viewer.admin.listPaginatedUnverified.reset();
+      fetchNextPage();
     },
   });
 
