@@ -11,6 +11,7 @@ export { DisabledAppEmail } from "./DisabledAppEmail";
 export { SlugReplacementEmail } from "./SlugReplacementEmail";
 export { FeedbackEmail } from "./FeedbackEmail";
 export { ForgotPasswordEmail } from "./ForgotPasswordEmail";
+export { InviteMentorEmail } from "./InviteMentorEmail";
 export { OrganizerCancelledEmail } from "./OrganizerCancelledEmail";
 export { OrganizerLocationChangeEmail } from "./OrganizerLocationChangeEmail";
 export { OrganizerPaymentRefundFailedEmail } from "./OrganizerPaymentRefundFailedEmail";
