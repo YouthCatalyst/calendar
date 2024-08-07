@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { hashPassword } from "@calcom/features/auth/lib/hashPassword";
-import { sendEmailVerification } from "@calcom/features/auth/lib/verifyEmail";
 import notEmpty from "@calcom/lib/notEmpty";
 import { generateUsernameSuggestion } from "@calcom/lib/server/username";
 import { validateAndGetCorrectedUsernameAndEmail } from "@calcom/lib/validateUsername";
@@ -17,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const userEmail = email.toLowerCase();
   const username = userEmail.split("@")[0];
-  let hashedPassword;
+  const hashedPassword = password ? await hashPassword(password) : await hashPassword("");
   let correctedUsername = username;
 
   const userValidation = await validateAndGetCorrectedUsernameAndEmail({
@@ -27,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
 
   if (!userValidation.isValid) {
-    if (userValidation.email) {
+    if (userValidation.email == userEmail) {
       return res.status(409).json({ message: "Email is already taken" });
     }
 
@@ -53,12 +52,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(422).json({ message: "Invalid username" });
   }
 
-  if (password) {
-    hashedPassword = await hashPassword(password);
-  } else {
-    hashedPassword = await hashPassword("");
-  }
-
   await prisma.user.upsert({
     where: { email: userEmail },
     update: {},
@@ -76,12 +69,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (process.env.AVATARAPI_USERNAME && process.env.AVATARAPI_PASSWORD) {
     await prefillAvatar({ email: userEmail });
   }
-
-  await sendEmailVerification({
-    email: userEmail,
-    username: correctedUsername,
-    language,
-  });
 
   res.status(201).json({ message: "Mentor registered" });
 }
