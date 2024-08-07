@@ -12,7 +12,11 @@ import { prefillAvatar } from "../utils/prefillAvatar";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const data = req.body;
-  const { mentorName, email, password, language, token } = registerMentorSchema.parse(data);
+  const { mentorName, email, password, language, key } = registerMentorSchema.parse(data);
+
+  if (key != process.env.USER_CREATION_ACCESS_KEY) {
+    return res.status(403).json({ message: "Not allowed to create user" });
+  }
 
   const userEmail = email.toLowerCase();
   const username = userEmail.split("@")[0];

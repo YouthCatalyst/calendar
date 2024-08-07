@@ -698,7 +698,7 @@ export const registerMentorSchema = z.object({
   email: z.string().email({ message: "Invalid email" }),
   password: z.string().optional(),
   language: z.string().optional(),
-  token: z.string().optional(),
+  key: z.string().optional(),
 });
 
 export const ZVerifyCodeInputSchema = z.object({
