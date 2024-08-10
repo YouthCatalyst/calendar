@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { hashPassword } from "@calcom/features/auth/lib/hashPassword";
@@ -20,7 +21,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const userEmail = email.toLowerCase();
   const username = userEmail.split("@")[0];
-  const hashedPassword = password ? await hashPassword(password) : await hashPassword("");
   let correctedUsername = username;
 
   const userValidation = await validateAndGetCorrectedUsernameAndEmail({
@@ -55,6 +55,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userValidation.username) {
     return res.status(422).json({ message: "Invalid username" });
   }
+
+  // generate password
+  const hashedPassword = password
+    ? await hashPassword(password)
+    : await hashPassword(crypto.randomBytes(20).toString("hex"));
 
   await prisma.user.upsert({
     where: { email: userEmail },
