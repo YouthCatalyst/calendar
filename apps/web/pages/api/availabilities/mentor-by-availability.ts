@@ -1,53 +1,82 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { z } from "zod";
 
 import prisma from "@calcom/prisma";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { query } = req;
+  const getMentorsSchema = z
+    .object({
+      startTime: z.date().or(z.string()).optional(),
+      endTime: z.date().or(z.string()).optional(),
+      take: z.number().optional(),
+      skip: z.number().optional(),
+    })
+    .strict();
+
+  const { startTime, endTime, take, skip } = getMentorsSchema.parse(req.query);
 
   if (req.method === "GET") {
+    const parsedStartTime = new Date(startTime as string);
+    const parsedEndTime = new Date(endTime as string);
+
     const selectedUsers = await prisma.user.findMany({
+      where: {
+        schedules: {
+          some: {
+            availability: {
+              some: {
+                OR: [
+                  ...(startTime
+                    ? [
+                        {
+                          startTime: {
+                            lt: parsedStartTime,
+                          },
+                          endTime: {
+                            gt: parsedStartTime,
+                          },
+                        },
+                      ]
+                    : []),
+                  ...(endTime
+                    ? [
+                        {
+                          startTime: {
+                            lt: parsedEndTime,
+                          },
+                          endTime: {
+                            gt: parsedEndTime,
+                          },
+                        },
+                      ]
+                    : []),
+                ].filter(Boolean),
+              },
+            },
+          },
+        },
+      },
       select: {
         id: true,
         name: true,
         email: true,
-        availability: {
+        schedules: {
           select: {
-            startTime: true,
-            endTime: true,
+            availability: {
+              select: {
+                startTime: true,
+                endTime: true,
+              },
+            },
           },
         },
       },
-    });
-
-    // If startTime more than query.startTime and endTime less than query.endTime
-    const filteredUsers = selectedUsers.filter((user) => {
-      const availability = user.availability;
-
-      // If neither query.startTime nor query.endTime is provided, return true (include the user)
-      if (!query.startTime && !query.endTime) {
-        return true;
-      }
-
-      return availability.some((time) => {
-        // Convert availability times and query times to Date objects
-        const startTime = new Date(time.startTime);
-        const endTime = new Date(time.endTime);
-        const queryStartTime = query.startTime ? new Date(query.startTime as string) : null;
-        const queryEndTime = query.endTime ? new Date(query.endTime as string) : null;
-
-        // Apply the filter based on the provided query times
-        return (
-          !queryStartTime ||
-          startTime >= queryStartTime || // Check if startTime is greater than or equal to queryStartTime
-          !queryEndTime ||
-          endTime <= queryEndTime // Check if endTime is less than or equal to queryEndTime
-        );
-      });
+      take,
+      skip,
     });
 
     res.status(200).json({
-      availability: filteredUsers,
+      mentors: selectedUsers,
       message: "Get Mentors by Availability Successful",
     });
   }
