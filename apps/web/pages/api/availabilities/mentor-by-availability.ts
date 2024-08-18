@@ -30,10 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     ? [
                         {
                           startTime: {
-                            lt: parsedStartTime,
+                            lte: parsedStartTime,
                           },
                           endTime: {
-                            gt: parsedStartTime,
+                            gte: parsedStartTime,
                           },
                         },
                       ]
@@ -42,10 +42,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     ? [
                         {
                           startTime: {
-                            lt: parsedEndTime,
+                            lte: parsedEndTime,
                           },
                           endTime: {
-                            gt: parsedEndTime,
+                            gte: parsedEndTime,
                           },
                         },
                       ]
