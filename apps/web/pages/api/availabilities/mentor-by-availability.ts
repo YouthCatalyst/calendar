@@ -66,8 +66,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       skip,
     });
 
-    console.log(selectedUsers);
-
     const allUsersAvailability = (
       await getUsersAvailability({
         users: selectedUsers,
