@@ -23,8 +23,6 @@ import {
   TextField,
 } from "@calcom/ui";
 
-import { withLicenseRequired } from "../../common/components/LicenseRequired";
-
 const { Cell, ColumnTitle, Header, Row } = Table;
 
 const FETCH_LIMIT = 25;
@@ -321,4 +319,4 @@ const DeleteUserDialog = ({
   );
 };
 
-export const UsersTable = withLicenseRequired(UsersTableBare);
+export const UsersTable = UsersTableBare;
