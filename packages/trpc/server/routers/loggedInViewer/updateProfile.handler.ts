@@ -1,4 +1,6 @@
 import { Prisma } from "@prisma/client";
+import axios from "axios";
+import jwt from "jsonwebtoken";
 // eslint-disable-next-line no-restricted-imports
 import { keyBy } from "lodash";
 import type { GetServerSidePropsContext, NextApiResponse } from "next";
@@ -370,6 +372,9 @@ export const updateProfileHandler = async ({ ctx, input }: UpdateProfileOptions)
     }
   }
 
+  //notify FlashCampus regarding update/activation
+  activateUserInFlashCampus({ ctx, input });
+
   return {
     ...input,
     email: emailVerification && !secondaryEmail?.emailVerified ? user.email : input.email,
@@ -399,3 +404,41 @@ const handleUserMetadata = ({ ctx, input }: UpdateProfileOptions) => {
   // Required so we don't override and delete saved values
   return { ...userMetadata, ...cleanMetadata };
 };
+
+async function activateUserInFlashCampus({ ctx, input }: UpdateProfileOptions) {
+  const { user } = ctx;
+
+  if (user.username != null) {
+    const email = user.email;
+
+    const defaultLink = `${process.env.NEXT_PUBLIC_WEBAPP_URL}/${user.username}/15min_meeting`;
+
+    const url = `${process.env.FLASHCAMPUS_LINK}/api/account/activate-mentor`;
+
+    console.log(defaultLink);
+    console.log(url);
+
+    const tokenizedPayload = jwt.sign(
+      {
+        email,
+        default_link: defaultLink,
+      },
+      process.env.FLASHCAMPUS_KEY as string,
+      {
+        expiresIn: 1800, // 30 min
+      }
+    );
+
+    const result = await axios.post(
+      url,
+      { payload: tokenizedPayload },
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+        },
+      }
+    );
+
+    //todo: if the results are a failure (e.g on a server failure case), they should be logged. Or something.
+  }
+}
