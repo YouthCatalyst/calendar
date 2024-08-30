@@ -16,8 +16,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .strict();
 
     const { startTime, endTime, take, skip } = getMentorsSchema.parse(req.query);
-    const parsedStartTime = new Date(startTime as string);
-    const parsedEndTime = new Date(endTime as string);
+
+    const parsedStartTime = new Date(startTime);
+    const parsedEndTime = new Date(endTime);
 
     // adjusting day index (start from saturday with 0)
     let startDay = parsedStartTime.getDay() - 1;
@@ -28,8 +29,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (endDay === -1) endDay = 6;
 
     // change date format to 1970-1-1
-    const startDate = Date.UTC(1970, 0, 1, parsedStartTime.getUTCHours(), parsedStartTime.getUTCMinutes());
-    const endDate = Date.UTC(1970, 0, 1, parsedEndTime.getUTCHours(), parsedEndTime.getUTCMinutes());
+    const startDateUTC = Date.UTC(1970, 0, 1, parsedStartTime.getUTCHours(), parsedStartTime.getUTCMinutes());
+    const endDateUTC = Date.UTC(1970, 0, 1, parsedEndTime.getUTCHours(), parsedEndTime.getUTCMinutes());
 
     const selectedUsers = await prisma.user.findMany({
       where: {
@@ -48,10 +49,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     ? [
                         {
                           startTime: {
-                            lte: new Date(startDate),
+                            lte: new Date(startDateUTC),
                           },
                           endTime: {
-                            gte: new Date(startDate),
+                            gte: new Date(startDateUTC),
                           },
                         },
                       ]
@@ -60,10 +61,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     ? [
                         {
                           startTime: {
-                            lte: new Date(endDate),
+                            lte: new Date(endDateUTC),
                           },
                           endTime: {
-                            gte: new Date(endDate),
+                            gte: new Date(endDateUTC),
                           },
                         },
                       ]
