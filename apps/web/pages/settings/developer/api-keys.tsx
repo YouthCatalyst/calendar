@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import type { TApiKeys } from "@calcom/ee/api-keys/components/ApiKeyListItem";
-import LicenseRequired from "@calcom/ee/common/components/LicenseRequired";
 import ApiKeyDialogForm from "@calcom/features/ee/api-keys/components/ApiKeyDialogForm";
 import ApiKeyListItem from "@calcom/features/ee/api-keys/components/ApiKeyListItem";
 import { getLayout } from "@calcom/features/settings/layouts/SettingsLayout";
@@ -74,35 +73,33 @@ const ApiKeysView = () => {
         borderInShellHeader={true}
       />
 
-      <LicenseRequired>
-        <div>
-          {data?.length ? (
-            <>
-              <div className="border-subtle rounded-b-lg border border-t-0">
-                {data.map((apiKey, index) => (
-                  <ApiKeyListItem
-                    key={apiKey.id}
-                    apiKey={apiKey}
-                    lastItem={data.length === index + 1}
-                    onEditClick={() => {
-                      setApiKeyToEdit(apiKey);
-                      setApiKeyModal(true);
-                    }}
-                  />
-                ))}
-              </div>
-            </>
-          ) : (
-            <EmptyScreen
-              Icon="link"
-              headline={t("create_first_api_key")}
-              description={t("create_first_api_key_description", { appName: APP_NAME })}
-              className="rounded-b-lg rounded-t-none border-t-0"
-              buttonRaw={<NewApiKeyButton />}
-            />
-          )}
-        </div>
-      </LicenseRequired>
+      <div>
+        {data?.length ? (
+          <>
+            <div className="border-subtle rounded-b-lg border border-t-0">
+              {data.map((apiKey, index) => (
+                <ApiKeyListItem
+                  key={apiKey.id}
+                  apiKey={apiKey}
+                  lastItem={data.length === index + 1}
+                  onEditClick={() => {
+                    setApiKeyToEdit(apiKey);
+                    setApiKeyModal(true);
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <EmptyScreen
+            Icon="link"
+            headline={t("create_first_api_key")}
+            description={t("create_first_api_key_description", { appName: APP_NAME })}
+            className="rounded-b-lg rounded-t-none border-t-0"
+            buttonRaw={<NewApiKeyButton />}
+          />
+        )}
+      </div>
 
       <Dialog open={apiKeyModal} onOpenChange={setApiKeyModal}>
         <DialogContent type="creation">
