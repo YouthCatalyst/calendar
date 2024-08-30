@@ -4,36 +4,56 @@ import { z } from "zod";
 import prisma from "@calcom/prisma";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const getMentorsSchema = z
-    .object({
-      startTime: z.date().or(z.string()).optional(),
-      endTime: z.date().or(z.string()).optional(),
-      take: z.number().optional(),
-      skip: z.number().optional(),
-    })
-    .strict();
-
-  const { startTime, endTime, take, skip } = getMentorsSchema.parse(req.query);
-
   if (req.method === "GET") {
+    const getMentorsSchema = z
+      .object({
+        startTime: z.date().or(z.string()).optional(),
+        endTime: z.date().or(z.string()).optional(),
+        take: z.number().optional(),
+        skip: z.number().optional(),
+      })
+      .strict();
+
+    const { startTime, endTime, take, skip } = getMentorsSchema.parse(req.query);
     const parsedStartTime = new Date(startTime as string);
     const parsedEndTime = new Date(endTime as string);
+
+    // adjusting day index (start from saturday with 0)
+    let startDay = parsedStartTime.getDay() - 1;
+    let endDay = parsedEndTime.getDay() - 1;
+
+    // edge case for saturday
+    if (startDay === -1) startDay = 6;
+    if (endDay === -1) endDay = 6;
+
+    // change date format to 1970-1-1
+    const startDate = Date.UTC(1970, 0, 1, parsedStartTime.getUTCHours(), parsedStartTime.getUTCMinutes());
+    const endDate = Date.UTC(1970, 0, 1, parsedEndTime.getUTCHours(), parsedEndTime.getUTCMinutes());
 
     const selectedUsers = await prisma.user.findMany({
       where: {
         schedules: {
+          // check if the schedule name is flashcampus mentoring
           some: {
+            name: {
+              equals: "Flashcampus Mentoring",
+            },
             availability: {
               some: {
+                // check if the desired day is exist in the schedule availabilites
+                days: {
+                  hasSome: [startDay, endDay],
+                },
+                // check if desired time is in the time range
                 OR: [
                   ...(startTime
                     ? [
                         {
                           startTime: {
-                            lte: parsedStartTime,
+                            lte: new Date(startDate),
                           },
                           endTime: {
-                            gte: parsedStartTime,
+                            gte: new Date(startDate),
                           },
                         },
                       ]
@@ -42,10 +62,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     ? [
                         {
                           startTime: {
-                            lte: parsedEndTime,
+                            lte: new Date(endDate),
                           },
                           endTime: {
-                            gte: parsedEndTime,
+                            gte: new Date(endDate),
                           },
                         },
                       ]
@@ -60,16 +80,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         id: true,
         name: true,
         email: true,
-        schedules: {
-          select: {
-            availability: {
-              select: {
-                startTime: true,
-                endTime: true,
-              },
-            },
-          },
-        },
       },
       take,
       skip,
