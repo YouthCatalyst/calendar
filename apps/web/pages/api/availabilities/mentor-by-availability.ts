@@ -1,16 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 
+import { getUsersAvailability } from "@calcom/core/getUserAvailability";
 import prisma from "@calcom/prisma";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
     const getMentorsSchema = z
       .object({
-        startTime: z.date().or(z.string()).optional(),
-        endTime: z.date().or(z.string()).optional(),
-        take: z.number().optional(),
-        skip: z.number().optional(),
+        startTime: z.string(),
+        endTime: z.string(),
+        take: z.string().optional(),
+        skip: z.string().optional(),
       })
       .strict();
 
@@ -33,18 +34,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const selectedUsers = await prisma.user.findMany({
       where: {
         schedules: {
-          // check if the schedule name is flashcampus mentoring
           some: {
             name: {
               equals: "Flashcampus Mentoring",
             },
             availability: {
               some: {
-                // check if the desired day is exist in the schedule availabilites
                 days: {
                   hasSome: [startDay, endDay],
                 },
-                // check if desired time is in the time range
                 OR: [
                   ...(startTime
                     ? [
@@ -81,12 +79,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         name: true,
         email: true,
       },
-      take,
-      skip,
+      take: Number(take),
+      skip: Number(skip),
+    });
+
+    const allUsersAvailability = (
+      await getUsersAvailability({
+        users: selectedUsers,
+        query: {
+          dateFrom: startTime,
+          dateTo: endTime,
+          returnDateOverrides: true,
+        },
+      })
+    ).map(({ busy, dateRanges, oooExcludedDateRanges, timeZone, datesOutOfOffice }, index) => {
+      const currentUser = selectedUsers[index];
+      return {
+        timeZone,
+        dateRanges,
+        oooExcludedDateRanges,
+        busy,
+        user: currentUser,
+        datesOutOfOffice,
+      };
     });
 
     res.status(200).json({
-      mentors: selectedUsers,
+      mentors: allUsersAvailability,
       message: "Get Mentors by Availability Successful",
     });
   }
