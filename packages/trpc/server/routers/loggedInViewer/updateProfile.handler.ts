@@ -415,9 +415,6 @@ async function activateUserInFlashCampus({ ctx, input }: UpdateProfileOptions) {
 
     const url = `${process.env.FLASHCAMPUS_LINK}/api/account/activate-mentor`;
 
-    console.log(defaultLink);
-    console.log(url);
-
     const tokenizedPayload = jwt.sign(
       {
         email,
