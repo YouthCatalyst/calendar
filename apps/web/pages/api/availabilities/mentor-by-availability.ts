@@ -7,8 +7,8 @@ import prisma from "@calcom/prisma";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const getMentorsSchema = z
     .object({
-      startTime: z.date().or(z.string()),
-      endTime: z.date().or(z.string()),
+      startTime: z.string(),
+      endTime: z.string(),
       take: z.number().optional(),
       skip: z.number().optional(),
     })
@@ -17,44 +17,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { startTime, endTime, take, skip } = getMentorsSchema.parse(req.query);
 
   if (req.method === "GET") {
-    const parsedStartTime = new Date(startTime as string);
-    const parsedEndTime = new Date(endTime as string);
-
     const selectedUsers = await prisma.user.findMany({
       where: {
-        schedules: {
-          some: {
-            availability: {
-              some: {
-                OR: [
-                  ...(startTime
-                    ? [
-                        {
-                          startTime: {
-                            lte: parsedStartTime,
-                          },
-                          endTime: {
-                            gte: parsedStartTime,
-                          },
-                        },
-                      ]
-                    : []),
-                  ...(endTime
-                    ? [
-                        {
-                          startTime: {
-                            lte: parsedEndTime,
-                          },
-                          endTime: {
-                            gte: parsedEndTime,
-                          },
-                        },
-                      ]
-                    : []),
-                ].filter(Boolean),
-              },
-            },
-          },
+        emailVerified: {
+          not: null,
         },
       },
       select: {
@@ -75,17 +41,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           returnDateOverrides: true,
         },
       })
-    ).map(({ busy, dateRanges, oooExcludedDateRanges, timeZone, datesOutOfOffice }, index) => {
-      const currentUser = selectedUsers[index];
-      return {
-        timeZone,
-        dateRanges,
-        oooExcludedDateRanges,
-        busy,
-        user: currentUser,
-        datesOutOfOffice,
-      };
-    });
+    )
+      .map(({ busy, dateRanges, oooExcludedDateRanges, timeZone, datesOutOfOffice }, index) => {
+        const currentUser = selectedUsers[index];
+
+        if (dateRanges.length == 0) return null;
+
+        return {
+          timeZone,
+          dateRanges,
+          oooExcludedDateRanges,
+          busy,
+          user: currentUser,
+          datesOutOfOffice,
+        };
+      })
+      .filter((item) => item !== null);
 
     res.status(200).json({
       mentors: allUsersAvailability,
