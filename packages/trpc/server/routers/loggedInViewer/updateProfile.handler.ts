@@ -408,10 +408,20 @@ const handleUserMetadata = ({ ctx, input }: UpdateProfileOptions) => {
 async function activateUserInFlashCampus({ ctx, input }: UpdateProfileOptions) {
   const { user } = ctx;
 
+  const fcEvent = await prisma.eventType.findFirst({
+    where: {
+      userId: user.id,
+    },
+  });
+
+  if (!fcEvent) {
+    return;
+  }
+
   if (user.username != null) {
     const email = user.email;
 
-    const defaultLink = `${process.env.NEXT_PUBLIC_WEBAPP_URL}/${user.username}/15min_meeting`;
+    const defaultLink = `${process.env.NEXT_PUBLIC_WEBAPP_URL}/${user.username}/fc-mentoring-45`;
 
     const url = `${process.env.FLASHCAMPUS_LINK}/api/account/activate-mentor`;
 
@@ -425,17 +435,22 @@ async function activateUserInFlashCampus({ ctx, input }: UpdateProfileOptions) {
         expiresIn: 1800, // 30 min
       }
     );
-
-    const result = await axios.post(
-      url,
-      { payload: tokenizedPayload },
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
-        },
-      }
-    );
-
-    //todo: if the results are a failure (e.g on a server failure case), they should be logged. Or something.
+    try {
+      const result = await axios.post(
+        url,
+        { payload: tokenizedPayload },
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+          },
+        }
+      );
+    } catch (e: any) {
+      log.warn(
+        `Mentor with email=${
+          user.email
+        } not properly activated in FlashCampus, may require manual activation. Cause=${e.toString()}`
+      );
+    }
   }
 }

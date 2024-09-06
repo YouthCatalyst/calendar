@@ -2,7 +2,9 @@ import * as crypto from "crypto";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { hashPassword } from "@calcom/features/auth/lib/hashPassword";
+import { generateDefaultFlashCampusEvent } from "@calcom/features/auth/signup/utils/generateDefaultFlashCampusEvent";
 import notEmpty from "@calcom/lib/notEmpty";
+import { EventTypeRepository } from "@calcom/lib/server/repository/eventType";
 import { generateUsernameSuggestion } from "@calcom/lib/server/username";
 import { validateAndGetCorrectedUsernameAndEmail } from "@calcom/lib/validateUsername";
 import prisma from "@calcom/prisma";
@@ -11,6 +13,7 @@ import { registerMentorSchema } from "@calcom/prisma/zod-utils";
 
 import { prefillAvatar } from "../utils/prefillAvatar";
 
+//handler of FlashCampus Mentor Registration
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const data = req.body;
   const { mentorName, email, password, language, key } = registerMentorSchema.parse(data);
@@ -61,7 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ? await hashPassword(password)
     : await hashPassword(crypto.randomBytes(20).toString("hex"));
 
-  await prisma.user.upsert({
+  const createdUser = await prisma.user.upsert({
     where: { email: userEmail },
     update: {},
     create: {
@@ -78,6 +81,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (process.env.AVATARAPI_USERNAME && process.env.AVATARAPI_PASSWORD) {
     await prefillAvatar({ email: userEmail });
   }
+
+  const defaultEvent = generateDefaultFlashCampusEvent(createdUser.id);
+
+  await EventTypeRepository.create({
+    ...defaultEvent,
+  });
 
   res.status(201).json({ message: "Mentor registered" });
 }
