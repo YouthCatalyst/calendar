@@ -786,7 +786,6 @@ export const AUTH_OPTIONS: AuthOptions = {
                   // prevent conflicts for users with the same name.
                   username: usernameSlug(user.name),
                   emailVerified: new Date(Date.now()),
-                  name: user.name,
                   identityProvider: idP,
                   identityProviderId: account.providerAccountId,
                 },
