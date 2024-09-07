@@ -9,8 +9,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .object({
       startTime: z.string(),
       endTime: z.string(),
-      take: z.number().optional(),
-      skip: z.number().optional(),
+      take: z.coerce.number().optional().default(10),
+      skip: z.coerce.number().optional().default(0),
     })
     .strict();
 
@@ -28,20 +28,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         name: true,
         email: true,
       },
-      take,
-      skip,
     });
 
-    const allUsersAvailability = (
-      await getUsersAvailability({
-        users: selectedUsers,
-        query: {
-          dateFrom: startTime,
-          dateTo: endTime,
-          returnDateOverrides: true,
-        },
-      })
-    )
+    const allUsersAvailability = await getUsersAvailability({
+      users: selectedUsers,
+      query: {
+        dateFrom: startTime,
+        dateTo: endTime,
+        returnDateOverrides: true,
+      },
+    });
+
+    const payload = allUsersAvailability
       .map(({ busy, dateRanges, oooExcludedDateRanges, timeZone, datesOutOfOffice }, index) => {
         const currentUser = selectedUsers[index];
 
@@ -58,8 +56,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       .filter((item) => item !== null);
 
+    const response = payload.slice(skip, skip + take);
+
     res.status(200).json({
-      mentors: allUsersAvailability,
+      mentors: response,
       message: "Get Mentors by Availability Successful",
     });
   }
