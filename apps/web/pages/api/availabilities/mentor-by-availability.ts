@@ -16,7 +16,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { startTime, endTime, mentorsId } = getMentorsSchema.parse(req.query);
 
   if (req.method === "GET") {
-    console.log("hai kawan", mentorsId);
     const selectedUsers = await prisma.user.findMany({
       where: {
         emailVerified: {
@@ -33,8 +32,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    console.log("fetchUsers: ", selectedUsers);
-
     const allUsersAvailability = await getUsersAvailability({
       users: selectedUsers,
       query: {
@@ -43,8 +40,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         returnDateOverrides: true,
       },
     });
-
-    console.log("Users availability: ", allUsersAvailability);
 
     const payload = allUsersAvailability
       .map(({ busy, dateRanges, oooExcludedDateRanges, timeZone, datesOutOfOffice }, index) => {
@@ -62,8 +57,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         };
       })
       .filter((item) => item !== null);
-
-    console.log("final result: ", payload);
 
     res.status(200).json({
       mentors: payload,
