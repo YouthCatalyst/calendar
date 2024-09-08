@@ -9,18 +9,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .object({
       startTime: z.string(),
       endTime: z.string(),
-      take: z.coerce.number().optional().default(10),
-      skip: z.coerce.number().optional().default(0),
+      mentorsId: z.array(z.string()),
     })
     .strict();
 
-  const { startTime, endTime, take, skip } = getMentorsSchema.parse(req.query);
+  const { startTime, endTime, mentorsId } = getMentorsSchema.parse(req.query);
 
   if (req.method === "GET") {
+    console.log("hai kawan", mentorsId);
     const selectedUsers = await prisma.user.findMany({
       where: {
         emailVerified: {
           not: null,
+        },
+        email: {
+          in: mentorsId,
         },
       },
       select: {
@@ -30,6 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
+    console.log("fetchUsers: ", selectedUsers);
+
     const allUsersAvailability = await getUsersAvailability({
       users: selectedUsers,
       query: {
@@ -38,6 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         returnDateOverrides: true,
       },
     });
+
+    console.log("Users availability: ", allUsersAvailability);
 
     const payload = allUsersAvailability
       .map(({ busy, dateRanges, oooExcludedDateRanges, timeZone, datesOutOfOffice }, index) => {
@@ -56,10 +63,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       .filter((item) => item !== null);
 
-    const response = payload.slice(skip, skip + take);
+    console.log("final result: ", payload);
 
     res.status(200).json({
-      mentors: response,
+      mentors: payload,
       message: "Get Mentors by Availability Successful",
     });
   }
