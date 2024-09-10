@@ -16,6 +16,7 @@ const getBookingQueries = z.object({
     .preprocess((val) => Number(val), z.number().int().positive())
     .optional()
     .default(10),
+  status: z.nativeEnum(BookingStatus).optional(),
 });
 
 const postBookingSchema = z.object({
@@ -44,7 +45,7 @@ const patchBookingSchema = z.object({
 
 async function GET(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { userEmail, page, take } = getBookingQueries.parse(req.query);
+    const { userEmail, page, take, status } = getBookingQueries.parse(req.query);
 
     const bookings = await prisma.booking.findMany({
       where: {
@@ -56,9 +57,15 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
       skip: (page - 1) * take,
     });
 
-    const mappedBookings = bookings.map((book) => {
+    let mappedBookings = bookings.map((book) => {
       return schemaBookingReadPublic.parse(book);
     });
+
+    if (status) {
+      mappedBookings = mappedBookings.filter((book) => {
+        return book.status === status;
+      });
+    }
 
     res.status(200).json({
       page: page,
