@@ -47,31 +47,43 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { userEmail, page, take, status } = getBookingQueries.parse(req.query);
 
+    const totalBookings = await prisma.booking.count({
+      where: {
+        user: {
+          email: userEmail,
+        },
+        status: status,
+      },
+    });
+
+    console.log(totalBookings);
+
     const bookings = await prisma.booking.findMany({
       where: {
         user: {
           email: userEmail,
         },
+        status: status,
       },
       take: take,
       skip: (page - 1) * take,
     });
 
-    let mappedBookings = bookings.map((book) => {
+    const mappedBookings = bookings.map((book) => {
       return schemaBookingReadPublic.parse(book);
     });
 
-    if (status) {
-      mappedBookings = mappedBookings.filter((book) => {
-        return book.status === status;
-      });
-    }
+    const nextPage = page + 1;
+    const previousPage = page === 1 ? null : page - 1;
 
     res.status(200).json({
-      page: page,
-      take: take,
-      bookings: mappedBookings,
       message: "Bookings fetched successfully",
+      bookings: mappedBookings,
+      take: take,
+      page: page,
+      nextPage: nextPage,
+      previousPage: previousPage,
+      totalEntries: totalBookings,
     });
   } catch (error: any) {
     res.status(400).json({ message: error });
