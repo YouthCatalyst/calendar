@@ -56,8 +56,6 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
       },
     });
 
-    console.log(totalBookings);
-
     const bookings = await prisma.booking.findMany({
       where: {
         user: {
