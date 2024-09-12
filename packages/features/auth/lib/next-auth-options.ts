@@ -773,6 +773,10 @@ export const AUTH_OPTIONS: AuthOptions = {
 
           if (existingUserWithEmail) {
             {
+              if (!existingUserWithEmail.emailVerified) {
+                return "/auth/error?error=unverified-email";
+              }
+
               await prisma.user.update({
                 where: {
                   email: existingUserWithEmail.email,
@@ -784,7 +788,6 @@ export const AUTH_OPTIONS: AuthOptions = {
                   // prevent conflicts for users with the same name.
                   username: usernameSlug(user.name),
                   emailVerified: new Date(Date.now()),
-                  name: user.name,
                   identityProvider: idP,
                   identityProviderId: account.providerAccountId,
                 },

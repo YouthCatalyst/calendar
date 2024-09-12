@@ -1,4 +1,6 @@
 import { Prisma } from "@prisma/client";
+import axios from "axios";
+import jwt from "jsonwebtoken";
 // eslint-disable-next-line no-restricted-imports
 import { keyBy } from "lodash";
 import type { GetServerSidePropsContext, NextApiResponse } from "next";
@@ -370,6 +372,9 @@ export const updateProfileHandler = async ({ ctx, input }: UpdateProfileOptions)
     }
   }
 
+  //notify FlashCampus regarding update/activation
+  activateUserInFlashCampus({ ctx, input });
+
   return {
     ...input,
     email: emailVerification && !secondaryEmail?.emailVerified ? user.email : input.email,
@@ -399,3 +404,53 @@ const handleUserMetadata = ({ ctx, input }: UpdateProfileOptions) => {
   // Required so we don't override and delete saved values
   return { ...userMetadata, ...cleanMetadata };
 };
+
+async function activateUserInFlashCampus({ ctx, input }: UpdateProfileOptions) {
+  const { user } = ctx;
+
+  const fcEvent = await prisma.eventType.findFirst({
+    where: {
+      userId: user.id,
+    },
+  });
+
+  if (!fcEvent) {
+    return;
+  }
+
+  if (user.username != null) {
+    const email = user.email;
+
+    const defaultLink = `${process.env.NEXT_PUBLIC_WEBAPP_URL}/${user.username}/fc-mentoring-45`;
+
+    const url = `${process.env.FLASHCAMPUS_LINK}/api/account/activate-mentor`;
+
+    const tokenizedPayload = jwt.sign(
+      {
+        email,
+        default_link: defaultLink,
+      },
+      process.env.FLASHCAMPUS_KEY as string,
+      {
+        expiresIn: 1800, // 30 min
+      }
+    );
+    try {
+      const result = await axios.post(
+        url,
+        { payload: tokenizedPayload },
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+          },
+        }
+      );
+    } catch (e: any) {
+      log.warn(
+        `Mentor with email=${
+          user.email
+        } not properly activated in FlashCampus, may require manual activation. Cause=${e.toString()}`
+      );
+    }
+  }
+}
