@@ -27,6 +27,11 @@ jobs:
       - name: Install project dependencies
         run: yarn install
 
+      - name: Check cache dir
+        run: |
+          echo $(yarn cache dir)
+          ls -la $(yarn cache dir)
+
       - name: Get yarn cache directory
         id: yarn-cache-dir
         run: |
