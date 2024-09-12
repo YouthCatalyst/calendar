@@ -3,6 +3,7 @@ FROM node:18 as builder
 
 WORKDIR /calcom
 
+ARG CALCOM_DIR=../../..
 ARG YARN_DIR
 ARG NEXT_PUBLIC_LICENSE_CONSENT
 ARG CALCOM_TELEMETRY_DISABLED=1
@@ -19,11 +20,11 @@ ENV NEXT_PUBLIC_WEBAPP_URL=http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER \
     CALENDSO_ENCRYPTION_KEY=${CALENDSO_ENCRYPTION_KEY} \
     NODE_OPTIONS=--max-old-space-size=${MAX_OLD_SPACE_SIZE}
 
-COPY package.json yarn.lock .yarnrc.yml playwright.config.ts turbo.json git-init.sh git-setup.sh ./
-COPY .yarn ./.yarn
-COPY apps/web ./apps/web
-COPY apps/api/v2 ./apps/api/v2
-COPY packages ./packages
+COPY $CALCOM_DIR/package.json $CALCOM_DIR/yarn.lock $CALCOM_DIR/.yarnrc.yml $CALCOM_DIR/playwright.config.ts $CALCOM_DIR/turbo.json $CALCOM_DIR/git-init.sh $CALCOM_DIR/git-setup.sh ./
+COPY $YARN_DIR ./.yarn
+COPY $CALCOM_DIR/apps/web ./apps/web
+COPY $CALCOM_DIR/apps/api/v2 ./apps/api/v2
+COPY $CALCOM_DIR/packages ./packages
 
 RUN yarn config set httpTimeout 1200000
 RUN npx turbo prune --scope=@calcom/web --docker
@@ -44,7 +45,7 @@ ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
 
 ENV NODE_ENV production
 
-COPY package.json .yarnrc.yml turbo.json ./
+COPY $CALCOM_DIR/package.json $CALCOM_DIR/.yarnrc.yml $CALCOM_DIR/turbo.json ./
 COPY $YARN_DIR ./.yarn
 COPY --from=builder /calcom/yarn.lock ./yarn.lock
 COPY --from=builder /calcom/node_modules ./node_modules
