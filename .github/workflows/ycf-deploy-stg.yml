@@ -27,6 +27,12 @@ jobs:
       - name: Install project dependencies
         run: yarn install
 
+      - name: Get calcom directory
+        id: calcom-dir
+        run: |
+          CALCOM_DIR=$(pwd)
+          echo "path=$CALCOM_DIR" >> "$GITHUB_OUTPUT"
+
       - name: Get yarn directory
         id: yarn-dir
         run: |
@@ -64,6 +70,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           platforms: linux/amd64
           build-args: |
+            CALCOM_DIR=${{ steps.calcom-dir.outputs.path }}
             YARN_DIR=${{ steps.yarn-dir.outputs.path }}
 
   deploy:
