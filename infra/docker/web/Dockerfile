@@ -3,7 +3,7 @@ FROM node:18 as builder
 
 WORKDIR /calcom
 
-ARG YARN_CACHE_DIR
+ARG YARN_DIR
 ARG NEXT_PUBLIC_LICENSE_CONSENT
 ARG CALCOM_TELEMETRY_DISABLED=1
 ARG NEXTAUTH_SECRET=secret
@@ -27,7 +27,7 @@ COPY packages ./packages
 
 RUN yarn config set httpTimeout 1200000
 RUN npx turbo prune --scope=@calcom/web --docker
-RUN --mount=type=cache,target=$YARN_CACHE_DIR YARN_CACHE_FOLDER=$YARN_CACHE_DIR yarn --frozen-lockfile
+RUN --mount=type=cache,target=$YARN_DIR YARN_CACHE_FOLDER=$YARN_DIR/cache yarn --frozen-lockfile
 # Build and make embed servable from web/public/embed folder
 RUN yarn --cwd packages/embeds/embed-core workspace @calcom/embed-core run build
 RUN yarn --cwd apps/web workspace @calcom/web run build
@@ -45,7 +45,7 @@ ARG NEXT_PUBLIC_WEBAPP_URL=http://localhost:3000
 ENV NODE_ENV production
 
 COPY package.json .yarnrc.yml turbo.json ./
-COPY .yarn ./.yarn
+COPY $YARN_DIR ./.yarn
 COPY --from=builder /calcom/yarn.lock ./yarn.lock
 COPY --from=builder /calcom/node_modules ./node_modules
 COPY --from=builder /calcom/packages ./packages
