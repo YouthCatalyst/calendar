@@ -23,6 +23,7 @@ COPY --from=root .yarn ./.yarn
 COPY --from=root apps/web ./apps/web
 COPY --from=root apps/api/v2 ./apps/api/v2
 COPY --from=root packages ./packages
+COPY --from=root tests ./tests
 
 RUN yarn config set httpTimeout 1200000
 RUN npx turbo prune --scope=@calcom/web --docker
