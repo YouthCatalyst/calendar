@@ -21,6 +21,7 @@ ENV NEXT_PUBLIC_WEBAPP_URL=http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER \
 COPY --from=root package.json yarn.lock .yarnrc.yml playwright.config.ts turbo.json git-init.sh git-setup.sh ./
 COPY --from=root .yarn ./.yarn
 COPY --from=root apps/web ./apps/web
+COPY --from=root apps/api/v1 ./apps/api/v1
 COPY --from=root apps/api/v2 ./apps/api/v2
 COPY --from=root packages ./packages
 COPY --from=root tests ./tests
