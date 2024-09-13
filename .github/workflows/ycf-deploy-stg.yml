@@ -14,6 +14,21 @@ jobs:
   build:
     name: Build and push Docker image
     runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+         - 5432:5432
     steps:
       - name: Checkout Sources
         uses: actions/checkout@v4
@@ -59,9 +74,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           platforms: linux/amd64
+          add-hosts: host.docker.internal:host-gateway
           build-args: |
-            CALCOM_DIR=${{ steps.calcom-dir.outputs.path }}
-            YARN_DIR=${{ steps.yarn-dir.outputs.path }}
+            DATABASE_URL=postgres://postgres:postgres@host.docker.internal:5432/postgres
 
   deploy:
     name: Trigger staging deployment
