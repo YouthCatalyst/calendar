@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getUsersAvailability } from "@calcom/core/getUserAvailability";
 import prisma, { availabilityUserSelect } from "@calcom/prisma";
+import { credentialForCalendarServiceSelect } from "@calcom/prisma/selects/credential";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const getMentorsSchema = z
@@ -25,6 +26,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
       select: {
         ...availabilityUserSelect,
+        credentials: {
+          select: credentialForCalendarServiceSelect,
+        },
         id: true,
         name: true,
         email: true,
