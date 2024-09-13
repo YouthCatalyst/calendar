@@ -47,12 +47,39 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { userEmail, page, take, status } = getBookingQueries.parse(req.query);
 
-    const totalBookings = await prisma.booking.count({
+    const totalBookingsAccepted = await prisma.booking.count({
       where: {
         user: {
           email: userEmail,
         },
-        status: status,
+        status: "ACCEPTED",
+      },
+    });
+
+    const totalBookingsPending = await prisma.booking.count({
+      where: {
+        user: {
+          email: userEmail,
+        },
+        status: "PENDING",
+      },
+    });
+
+    const totalBookingsCancelled = await prisma.booking.count({
+      where: {
+        user: {
+          email: userEmail,
+        },
+        status: "CANCELLED",
+      },
+    });
+
+    const totalBookingsAwaitingHost = await prisma.booking.count({
+      where: {
+        user: {
+          email: userEmail,
+        },
+        status: "AWAITING_HOST",
       },
     });
 
@@ -81,7 +108,10 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
       page: page,
       nextPage: nextPage,
       previousPage: previousPage,
-      totalEntries: totalBookings,
+      totalBookingsAccepted: totalBookingsAccepted,
+      totalBookingsPending: totalBookingsPending,
+      totalBookingsAwaitingHost: totalBookingsAwaitingHost,
+      totalBookingsCancelled: totalBookingsCancelled,
     });
   } catch (error: any) {
     res.status(400).json({ message: error });
