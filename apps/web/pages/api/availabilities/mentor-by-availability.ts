@@ -24,10 +24,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       },
       select: {
+        ...availabilityUserSelect,
         id: true,
         name: true,
         email: true,
-        ...availabilityUserSelect,
       },
     });
 
