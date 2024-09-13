@@ -63,6 +63,9 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            network=host
 
       - name: Build and Push Image
         id: push
@@ -74,9 +77,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           platforms: linux/amd64
-          add-hosts: host.docker.internal:host-gateway
           build-args: |
-            DATABASE_URL=postgres://postgres:postgres@host.docker.internal:5432/postgres
+            DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
 
   deploy:
     name: Trigger staging deployment
