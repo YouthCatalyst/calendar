@@ -1,19 +1,17 @@
-name: Build and Deploy (Staging)
+name: Build and Deploy (Production)
 
 env:
   INSTANCE: Kairos
-  SERVICES: flashcampus/calendar/app-stg
+  SERVICES: flashcampus/calendar/app
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
   build:
     name: Build and push Docker image
     runs-on: ubuntu-24.04
+    if: ${{ github.ref_name == 'main' }}
     services:
       postgres:
         image: postgres:16
@@ -61,6 +59,7 @@ jobs:
             ${{ vars.REGISTRY_USER }}/calendar
           tags: |
             type=raw,value=latest
+            type=raw,value=stable
             type=sha
 
       - name: Set up QEMU
