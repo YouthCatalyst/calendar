@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 
 import { getUsersAvailability } from "@calcom/core/getUserAvailability";
-import prisma from "@calcom/prisma";
+import prisma, { availabilityUserSelect } from "@calcom/prisma";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const getMentorsSchema = z
@@ -27,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         id: true,
         name: true,
         email: true,
+        ...availabilityUserSelect,
       },
     });
 
