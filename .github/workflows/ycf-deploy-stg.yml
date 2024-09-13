@@ -45,7 +45,7 @@ jobs:
       - name: Run db migrations and seed for tests
         run: yarn db-deploy && yarn --cwd packages/prisma seed-app-store
         env:
-          DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
