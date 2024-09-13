@@ -16,7 +16,7 @@ export const InviteMentorEmail = (
   return (
     <BaseEmailHtml subject="Selamat datang, Mentor FlashCampus!">
       <p>
-        <>Halo,!</>
+        <>Halo, {props.user.name ?? props.user.email}!</>
       </p>
       <p style={{ fontWeight: 400, lineHeight: "24px" }}>
         <>
