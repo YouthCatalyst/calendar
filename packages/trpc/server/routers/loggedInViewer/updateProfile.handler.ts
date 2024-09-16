@@ -421,7 +421,7 @@ async function activateUserInFlashCampus({ ctx, input }: UpdateProfileOptions) {
   if (user.username != null) {
     const email = user.email;
 
-    const defaultLink = `${process.env.NEXT_PUBLIC_WEBAPP_URL}/${user.username}/fc-mentoring-45`;
+    const defaultLink = `${process.env.NEXT_PUBLIC_WEBAPP_URL}/${input?.username ?? user.username}/fc-mentoring-45`;
 
     const url = `${process.env.FLASHCAMPUS_LINK}/api/account/activate-mentor`;
 
