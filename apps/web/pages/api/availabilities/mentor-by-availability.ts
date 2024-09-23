@@ -9,7 +9,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .object({
       startTime: z.string(),
       endTime: z.string(),
-      mentorsId: z.array(z.string()),
+      mentorsId: z.union([z.string(), z.array(z.string())]).transform((ids) => {
+        return Array.isArray(ids) ? ids : [ids];
+      }),
     })
     .strict();
 
