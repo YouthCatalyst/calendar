@@ -10,18 +10,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     .object({
       startTime: z.string(),
       endTime: z.string(),
-      take: z.coerce.number().optional().default(10),
-      skip: z.coerce.number().optional().default(0),
+      mentorsId: z.union([z.string(), z.array(z.string())]).transform((ids) => {
+        return Array.isArray(ids) ? ids : [ids];
+      }),
     })
     .strict();
 
-  const { startTime, endTime, take, skip } = getMentorsSchema.parse(req.query);
+  const { startTime, endTime, mentorsId } = getMentorsSchema.parse(req.query);
 
   if (req.method === "GET") {
     const selectedUsers = await prisma.user.findMany({
       where: {
         emailVerified: {
           not: null,
+        },
+        email: {
+          in: mentorsId,
         },
       },
       select: {
@@ -61,10 +65,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       .filter((item) => item !== null);
 
-    const response = payload.slice(skip, skip + take);
-
     res.status(200).json({
-      mentors: response,
+      mentors: payload,
       message: "Get Mentors by Availability Successful",
     });
   }
