@@ -16,6 +16,7 @@ const getBookingQueries = z.object({
     .preprocess((val) => Number(val), z.number().int().positive())
     .optional()
     .default(10),
+  status: z.nativeEnum(BookingStatus).optional(),
 });
 
 const postBookingSchema = z.object({
@@ -44,13 +45,50 @@ const patchBookingSchema = z.object({
 
 async function GET(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { userEmail, page, take } = getBookingQueries.parse(req.query);
+    const { userEmail, page, take, status } = getBookingQueries.parse(req.query);
+
+    const totalBookingsAccepted = await prisma.booking.count({
+      where: {
+        user: {
+          email: userEmail,
+        },
+        status: "ACCEPTED",
+      },
+    });
+
+    const totalBookingsPending = await prisma.booking.count({
+      where: {
+        user: {
+          email: userEmail,
+        },
+        status: "PENDING",
+      },
+    });
+
+    const totalBookingsCancelled = await prisma.booking.count({
+      where: {
+        user: {
+          email: userEmail,
+        },
+        status: "CANCELLED",
+      },
+    });
+
+    const totalBookingsAwaitingHost = await prisma.booking.count({
+      where: {
+        user: {
+          email: userEmail,
+        },
+        status: "AWAITING_HOST",
+      },
+    });
 
     const bookings = await prisma.booking.findMany({
       where: {
         user: {
           email: userEmail,
         },
+        status: status,
       },
       take: take,
       skip: (page - 1) * take,
@@ -60,11 +98,20 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
       return schemaBookingReadPublic.parse(book);
     });
 
+    const nextPage = page + 1;
+    const previousPage = page === 1 ? null : page - 1;
+
     res.status(200).json({
-      page: page,
-      take: take,
-      bookings: mappedBookings,
       message: "Bookings fetched successfully",
+      bookings: mappedBookings,
+      take: take,
+      page: page,
+      nextPage: nextPage,
+      previousPage: previousPage,
+      totalBookingsAccepted: totalBookingsAccepted,
+      totalBookingsPending: totalBookingsPending,
+      totalBookingsAwaitingHost: totalBookingsAwaitingHost,
+      totalBookingsCancelled: totalBookingsCancelled,
     });
   } catch (error: any) {
     res.status(400).json({ message: error });
